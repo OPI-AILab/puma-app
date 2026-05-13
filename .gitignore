@@ -1,0 +1,4 @@
+_project
+.venv
+.idea
+/node_modules/

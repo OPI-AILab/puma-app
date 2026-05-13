@@ -1,0 +1,8 @@
+@if (authStore.isAuthenticated()) {
+  <app-navbar></app-navbar>
+}
+<main>
+  <router-outlet></router-outlet>
+</main>
+
+<p-toast position="top-center"></p-toast>

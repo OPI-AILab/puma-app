@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import "primeicons/primeicons.css";
+@import "@milkdown/crepe/theme/common/style.css";
+@import "@milkdown/crepe/theme/frame.css";
+
+@plugin "tailwindcss-primeui";
+
+.milkdown .ProseMirror {
+  padding: 1px 1px 1px 6rem !important;
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+.milkdown .ProseMirror[contenteditable="false"] {
+  padding: 1rem !important;
+  cursor: default;
+}
+
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  font-family: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji" !important;
+}
+
+.milkdown .milkdown-slash-menu {
+  z-index: 999;
+}
