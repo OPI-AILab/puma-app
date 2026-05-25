@@ -40,6 +40,10 @@ class StartEvaluationRequest(BaseModel):
     reset: bool = False
 
 
+class LangRequest(BaseModel):
+    lang: str
+
+
 class ChatMessageType(str, Enum):
     TEXT = "text"
     FILE = "file"

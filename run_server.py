@@ -15,7 +15,7 @@ from starlette.middleware.cors import CORSMiddleware
 
 from server import Security, LoginRequest, init_project, UpdateFileRequest, TaskDetails, SearchRequest, CATEGORIES, \
     ModelDetailsAndProperties, EvaluateRequest, CATEGORY_VERIFICATION_MAP, CreateEvaluationRequest, \
-    UpdateEvaluationConfigurationRequest, StartEvaluationRequest
+    UpdateEvaluationConfigurationRequest, StartEvaluationRequest, set_default_lang, default_lang, LangRequest
 from server.backup.config import BackupConfig
 from server.backup.scheduler import BackupScheduler
 from server.data import User, SavedResponseRequest
@@ -42,6 +42,9 @@ def create_app():
     with open(args.prompts_file, "r", encoding="utf-8") as prompts_file:
         prompts = json.load(prompts_file)
     db = Database(args)
+    saved_lang = db.settings.get("default_lang")
+    if saved_lang:
+        set_default_lang(saved_lang)
     logs_dao = LogsDAO(db.engine)
     evaluator = TaskEvaluator(args.project_dir, prompts, db.models.get_models_details(SearchRequest()))
     runner = EvaluationRunner(evaluator, db.evaluations, db.tasks)
@@ -409,7 +412,46 @@ def create_app():
 
     @app.get("/api/user/me")
     def get_current_user(user=Depends(Security.auth)):
-        return {"username": user}
+        return {"username": user, "isAdmin": user == "admin"}
+
+    @app.get("/api/admin/users")
+    def list_users(user=Depends(Security.admin_auth)):
+        users = db.users.get_users(SearchRequest())
+        return [{"id": u.id, "username": u.username} for u in users]
+
+    @app.post("/api/admin/users")
+    def create_user(value: User, user=Depends(Security.admin_auth)):
+        existing = db.users.get_user(value.username)
+        if existing:
+            raise HTTPException(status_code=409, detail="User already exists")
+        value.password = Security.hash_password(value.password)
+        res = db.users.save(value)
+        return {"id": res.id, "username": res.username}
+
+    @app.delete("/api/admin/users/{user_id}")
+    def delete_user(user_id: int, user=Depends(Security.admin_auth)):
+        target_user = db.users.get_user_by_id(user_id)
+        if not target_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        if target_user.username == "admin":
+            raise HTTPException(status_code=400, detail="Cannot delete admin user")
+        if db.saved_responses.count_by_user(user_id) > 0:
+            raise HTTPException(status_code=409, detail="Cannot delete user with saved responses")
+        db.users.delete_user(user_id)
+        return {"success": True}
+
+    @app.get("/api/admin/settings/lang")
+    def get_lang_setting(user=Depends(Security.admin_auth)):
+        return {"lang": default_lang()}
+
+    @app.post("/api/admin/settings/lang")
+    def set_lang_setting(request: LangRequest, user=Depends(Security.admin_auth)):
+        allowed = {"pl", "en", "de", "fr"}
+        if request.lang not in allowed:
+            raise HTTPException(status_code=422, detail=f"lang must be one of: {', '.join(sorted(allowed))}")
+        db.settings.set("default_lang", request.lang)
+        set_default_lang(request.lang)
+        return {"lang": request.lang}
 
     @app.post("/api/user/save")
     def save_user(value: User, user=Depends(Security.auth)):

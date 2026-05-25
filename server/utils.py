@@ -1,5 +1,9 @@
 import os
-from typing import List, Dict
+import threading
+from typing import List, Dict, Optional
+
+_lang_lock = threading.Lock()
+_lang_override: Optional[str] = None
 
 
 def init_project(project_dir: str):
@@ -18,4 +22,14 @@ def expand_env_vars(value: Dict, keys_to_expand: List[str]):
 
 
 def default_lang():
+    with _lang_lock:
+        if _lang_override is not None:
+            return _lang_override
     return os.environ.get("MULTIBENCH_LANG", "pl")
+
+
+def set_default_lang(lang: str):
+    global _lang_override
+    with _lang_lock:
+        _lang_override = lang
+    os.environ["MULTIBENCH_LANG"] = lang

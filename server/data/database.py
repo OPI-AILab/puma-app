@@ -6,7 +6,7 @@ import tempfile
 from datetime import datetime
 from sqlmodel import create_engine, SQLModel
 from server import SearchRequest
-from server.data import UserDAO, FileDAO, TaskDAO, ModelDAO, SavedResponseDAO
+from server.data import UserDAO, FileDAO, TaskDAO, ModelDAO, SavedResponseDAO, SettingsDAO
 from server.data.evaluations import EvaluationDAO
 from server.backup.cleaner import cleanup_old_backups
 from server.backup.config import BackupConfig
@@ -27,6 +27,7 @@ class Database:
         self.models = ModelDAO(self.engine)
         self.saved_responses = SavedResponseDAO(self.engine)
         self.evaluations = EvaluationDAO(self.engine)
+        self.settings = SettingsDAO(self.engine)
         self._init_db(args)
 
     def _init_db(self, args):

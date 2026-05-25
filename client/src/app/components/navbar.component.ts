@@ -63,6 +63,15 @@ import { LogImportDialogComponent } from '../logs/components/log-import-dialog.c
                   (onClick)="openImportDialog()"
                 ></p-button>
 
+                @if (authStore.user()?.isAdmin) {
+                  <p-button
+                    label="Admin"
+                    icon="pi pi-cog"
+                    [outlined]="true"
+                    routerLink="/admin"
+                  ></p-button>
+                }
+
                 <a
                   pButton
                   target="_blank"

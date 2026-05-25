@@ -4,7 +4,7 @@ from typing import Optional, List, Any, Dict
 
 from pydantic import BaseModel
 from sqlalchemy import JSON
-from sqlmodel import SQLModel, Field, Column, Session, select
+from sqlmodel import SQLModel, Field, Column, Session, select, func
 
 from server import SearchRequest, ModelDetails, ModelProperties
 from server.data import transactional
@@ -177,6 +177,11 @@ class SavedResponseDAO:
         query = select(SavedResponse).where(SavedResponse.task_id == task_id)
         responses = list(session.exec(query).all())
         return [_to_dict(r) for r in responses]
+
+    @transactional
+    def count_by_user(self, user_id: int, session: Session) -> int:
+        query = select(func.count()).select_from(SavedResponse).where(SavedResponse.user_created == user_id)
+        return session.exec(query).one()
 
     @transactional
     def delete_for_task(self, task_id: str, session: Session) -> int:

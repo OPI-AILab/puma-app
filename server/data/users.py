@@ -21,6 +21,10 @@ class UserDAO:
         return session.exec(query).first()
 
     @transactional
+    def get_user_by_id(self, user_id: int, session: Session) -> Optional[User]:
+        return session.get(User, user_id)
+
+    @transactional
     def get_users(self, request: SearchRequest, session: Session) -> List[User]:
         query = select(User).offset(request.offset).limit(request.limit)
         return list(session.exec(query).all())
@@ -31,3 +35,12 @@ class UserDAO:
         session.commit()
         session.refresh(user)
         return user
+
+    @transactional
+    def delete_user(self, user_id: int, session: Session) -> bool:
+        user = session.get(User, user_id)
+        if user:
+            session.delete(user)
+            session.commit()
+            return True
+        return False

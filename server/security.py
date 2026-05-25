@@ -49,3 +49,10 @@ class Security:
         if not username:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
         return username
+
+    @staticmethod
+    def admin_auth(request: Request):
+        username = Security.auth(request)
+        if username != "admin":
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
+        return username

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { map, Observable } from 'rxjs';
+import { catchError, Observable, of, switchMap } from 'rxjs';
 import { LoginRequest, User } from '../models/auth.models';
 
 @Injectable({
@@ -14,7 +14,11 @@ export class AuthService {
     const request: LoginRequest = { username, password };
     return this.http
       .post(`${this.apiUrl}/login`, request, { withCredentials: true })
-      .pipe(map(() => ({ username })));
+      .pipe(
+        switchMap(() => this.getCurrentUser().pipe(
+          catchError(() => of({ username, isAdmin: username === 'admin' } as User))
+        ))
+      );
   }
 
   logout(): Observable<void> {

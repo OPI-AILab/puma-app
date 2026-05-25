@@ -25,3 +25,14 @@ export const guestGuard: CanActivateFn = (route, state): boolean | UrlTree => {
 
   return router.createUrlTree(['/tasks']);
 };
+
+export const adminGuard: CanActivateFn = (route, state): boolean | UrlTree => {
+  const authStore = inject(AuthStore);
+  const router = inject(Router);
+
+  if (authStore.isAuthenticated() && authStore.user()?.isAdmin) {
+    return true;
+  }
+
+  return router.createUrlTree(['/tasks']);
+};
