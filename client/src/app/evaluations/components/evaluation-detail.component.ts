@@ -278,18 +278,17 @@ interface CategorySummaryRow {
           <p-table
             [value]="entries()"
             [loading]="loadingEntries()"
-            [tableStyle]="{ 'min-width': '50rem' }"
+            [tableStyle]="{ 'table-layout': 'fixed', 'width': '100%' }"
             selectionMode="single"
             (onRowSelect)="onRowClick($event.data)"
           >
             <ng-template pTemplate="header">
               <tr>
                 <th style="width: 40px">#</th>
-                <th style="width: 40px">Category</th>
-                <th style="width: 45%">Question</th>
-                <th style="width: 45%">Answer</th>
-                <th style="width: 60px">Score</th>
-                <th style="width: 60px">Error</th>
+                <th style="width: 40px"></th>
+                <th>Question</th>
+                <th>Answer</th>
+                <th style="width: 70px">Score</th>
               </tr>
             </ng-template>
 
@@ -306,7 +305,7 @@ interface CategorySummaryRow {
                 <td>
                   <div class="flex items-center justify-center">
                     <div
-                      class="w-6 h-6 rounded-full border-2 border-gray-300"
+                      class="w-6 h-6 shrink-0 rounded-full border-2 border-gray-300"
                       [style.background-color]="getCategoryColor(entry.category)"
                       [pTooltip]="entry.category || ''"
                       tooltipPosition="top"
@@ -342,17 +341,12 @@ interface CategorySummaryRow {
                     }
                   </div>
                 </td>
-                <td>
-                  @if (entry.error) {
-                    <i class="pi pi-exclamation-triangle text-red-500" [pTooltip]="entry.error" tooltipPosition="left"></i>
-                  }
-                </td>
               </tr>
             </ng-template>
 
             <ng-template pTemplate="emptymessage">
               <tr>
-                <td colspan="6" class="py-8">
+                <td colspan="5" class="py-8">
                   <div class="text-gray-500 text-center">
                     <i class="pi pi-info-circle text-3xl mb-2"></i>
                     <p>No entries yet</p>
