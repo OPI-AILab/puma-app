@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { catchError, Observable, of, switchMap } from 'rxjs';
-import { LoginRequest, User } from '../models/auth.models';
+import { catchError, map, Observable, of, switchMap } from 'rxjs';
+import { LoginRequest, ProjectStatus, User } from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root',
@@ -33,5 +33,17 @@ export class AuthService {
     return this.http.get<User>(`${this.apiUrl}/user/me`, {
       withCredentials: true,
     });
+  }
+
+  getProjectStatus(): Observable<ProjectStatus> {
+    return this.http.get<ProjectStatus>(`${this.apiUrl}/project/status`);
+  }
+
+  initProject(password: string): Observable<void> {
+    return this.http.post<void>(
+      `${this.apiUrl}/project/init`,
+      { username: 'admin', password },
+      { withCredentials: true }
+    );
   }
 }

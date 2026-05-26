@@ -8,6 +8,10 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface ProjectStatus {
+  hasUsers: boolean;
+}
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;

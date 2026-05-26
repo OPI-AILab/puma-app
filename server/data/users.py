@@ -1,5 +1,5 @@
 from typing import Optional, List
-from sqlmodel import SQLModel, Field, Session, select
+from sqlmodel import SQLModel, Field, Session, select, func
 from server import SearchRequest
 from server.data import transactional
 
@@ -35,6 +35,10 @@ class UserDAO:
         session.commit()
         session.refresh(user)
         return user
+
+    @transactional
+    def count(self, session: Session) -> int:
+        return session.exec(select(func.count()).select_from(User)).one()
 
     @transactional
     def delete_user(self, user_id: int, session: Session) -> bool:

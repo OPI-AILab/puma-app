@@ -19,6 +19,10 @@ export const guestGuard: CanActivateFn = (route, state): boolean | UrlTree => {
   const authStore = inject(AuthStore);
   const router = inject(Router);
 
+  if (authStore.projectEmpty()) {
+    return router.createUrlTree(['/setup']);
+  }
+
   if (!authStore.isAuthenticated()) {
     return true;
   }
@@ -35,4 +39,15 @@ export const adminGuard: CanActivateFn = (route, state): boolean | UrlTree => {
   }
 
   return router.createUrlTree(['/tasks']);
+};
+
+export const setupGuard: CanActivateFn = (): boolean | UrlTree => {
+  const authStore = inject(AuthStore);
+  const router = inject(Router);
+
+  if (authStore.projectEmpty()) {
+    return true;
+  }
+
+  return router.createUrlTree(['/login']);
 };

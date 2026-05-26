@@ -466,6 +466,29 @@ def create_app():
         output_path = db.export_project()
         return FileResponse(path=output_path, filename="export.zip", media_type="application/zip")
 
+    @app.get("/api/project/status")
+    def project_status():
+        return {"hasUsers": db.users.count() > 0}
+
+    @app.post("/api/project/init")
+    def project_init(value: User, response: Response):
+        if db.users.count() > 0:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Project already initialized")
+        if not value.password or len(value.password) < 8:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Password must be at least 8 characters")
+        value.username = "admin"
+        value.password = Security.hash_password(value.password)
+        db.users.save(value)
+        access_token = Security.create_token(data={"sub": "admin"})
+        response.set_cookie(
+            key="access_token",
+            value=access_token,
+            httponly=True,
+            samesite="strict",
+            max_age=240 * 3600,
+        )
+        return {"status": "ok"}
+
     @app.get("/api/ping")
     def ping(user=Depends(Security.auth)):
         return {"message": f"Hello {user}, you are authorized!"}
