@@ -66,7 +66,7 @@ import {CategoriesStore} from '../store/categories.store';
               <p-table
                 [value]="vm.models"
                 [tableStyle]="{ 'min-width': '50rem' }"
-                styleClass="p-datatable-striped"
+                class="p-datatable-striped"
               >
                 <ng-template pTemplate="header">
                   <tr>

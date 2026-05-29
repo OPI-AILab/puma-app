@@ -62,6 +62,34 @@ class Database:
                     else:
                         raise
 
+    def _collect_files_from_tasks(self) -> set:
+        files_from_tasks = set()
+        for task in self.tasks.get_tasks(SearchRequest()):
+            for message in task.details.get("content", []):
+                if message.get("type") == "file" and message.get("file"):
+                    files_from_tasks.add(message["file"])
+        return files_from_tasks
+
+    def find_orphan_files(self) -> dict:
+        files_from_tasks = self._collect_files_from_tasks()
+        files_dir = os.path.join(self.project_dir, "files")
+        disk_files = set(os.listdir(files_dir)) if os.path.isdir(files_dir) else set()
+        db_file_ids = {file.id for file in self.files.get_files(SearchRequest())}
+        orphan_files = sorted(disk_files - files_from_tasks)
+        ghost_records = sorted(db_file_ids - disk_files - files_from_tasks)
+        return {"orphan_files": orphan_files, "ghost_records": ghost_records}
+
+    def delete_orphan_files(self) -> dict:
+        candidates = self.find_orphan_files()
+        for file_id in candidates["orphan_files"]:
+            self.files.delete(file_id)
+        for file_id in candidates["ghost_records"]:
+            self.files.delete(file_id)
+        return {
+            "deleted_files": len(candidates["orphan_files"]),
+            "deleted_records": len(candidates["ghost_records"]),
+        }
+
     def export_project(self, target_dir: Optional[str] = None) -> str:
         if target_dir is None:
             target_dir = self.project_dir

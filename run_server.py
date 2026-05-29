@@ -440,6 +440,24 @@ def create_app():
         db.users.delete_user(user_id)
         return {"success": True}
 
+    @app.get("/api/admin/orphan-files")
+    def scan_orphan_files(user=Depends(Security.admin_auth)):
+        result = db.find_orphan_files()
+        return {
+            "orphanFiles": result["orphan_files"],
+            "ghostRecords": result["ghost_records"],
+            "orphanCount": len(result["orphan_files"]),
+            "ghostCount": len(result["ghost_records"]),
+        }
+
+    @app.post("/api/admin/orphan-files/cleanup")
+    def cleanup_orphan_files(user=Depends(Security.admin_auth)):
+        result = db.delete_orphan_files()
+        return {
+            "deletedFiles": result["deleted_files"],
+            "deletedRecords": result["deleted_records"],
+        }
+
     @app.get("/api/admin/settings/lang")
     def get_lang_setting(user=Depends(Security.admin_auth)):
         return {"lang": default_lang()}

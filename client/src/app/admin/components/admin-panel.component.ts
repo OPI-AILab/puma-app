@@ -10,7 +10,7 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { AdminService } from '../services/admin.service';
-import { AdminUser } from '../models/admin.models';
+import { AdminUser, OrphanFilesScan } from '../models/admin.models';
 import { UserCreateDialogComponent } from './user-create-dialog.component';
 
 const AVAILABLE_LANGS = [
@@ -42,7 +42,7 @@ const AVAILABLE_LANGS = [
 
       <h1 class="text-3xl font-bold text-gray-900 mt-4 mb-6">Administration</h1>
 
-      <p-card styleClass="mb-6">
+      <p-card class="mb-6">
         <ng-template #header>
           <div class="px-4 pt-4">
             <h2 class="text-xl font-semibold text-gray-800">
@@ -57,7 +57,7 @@ const AVAILABLE_LANGS = [
             optionLabel="label"
             optionValue="value"
             placeholder="Select language"
-            styleClass="w-48"
+            class="w-48"
           ></p-select>
           <p-button
             label="Save"
@@ -67,6 +67,71 @@ const AVAILABLE_LANGS = [
             (onClick)="saveLang()"
           ></p-button>
         </div>
+      </p-card>
+
+      <p-card class="mb-6">
+        <ng-template #header>
+          <div class="px-4 pt-4">
+            <h2 class="text-xl font-semibold text-gray-800">
+              <i class="pi pi-trash mr-2"></i>Orphaned files
+            </h2>
+          </div>
+        </ng-template>
+        <p class="text-gray-600 mb-4">
+          Files in the storage directory that are not linked to any question.
+          Scan first to preview candidates, then delete.
+        </p>
+        <div class="flex items-center gap-4 mb-4">
+          <p-button
+            label="Scan"
+            icon="pi pi-search"
+            severity="secondary"
+            [loading]="scanningOrphans()"
+            (onClick)="scanOrphans()"
+          ></p-button>
+          @if (orphanScan(); as scan) {
+            <p-button
+              [label]="'Delete ' + (scan.orphanCount + scan.ghostCount) + ' item(s)'"
+              icon="pi pi-trash"
+              severity="danger"
+              [disabled]="scan.orphanCount + scan.ghostCount === 0"
+              [loading]="cleaningOrphans()"
+              (onClick)="confirmCleanupOrphans($event)"
+            ></p-button>
+          }
+        </div>
+        @if (orphanScan(); as scan) {
+          @if (scan.orphanCount + scan.ghostCount === 0) {
+            <div class="text-green-700 font-medium">
+              <i class="pi pi-check-circle mr-2"></i>No orphaned files found.
+            </div>
+          } @else {
+            <div class="text-gray-700 mb-2">
+              {{ scan.orphanCount }} orphaned file(s) on disk,
+              {{ scan.ghostCount }} stale database record(s).
+            </div>
+            @if (scan.orphanFiles.length > 0) {
+              <div class="mb-2">
+                <span class="font-semibold text-gray-800">Files to delete:</span>
+                <ul class="list-disc list-inside text-sm text-gray-600 mt-1 max-h-48 overflow-auto">
+                  @for (file of scan.orphanFiles; track file) {
+                    <li>{{ file }}</li>
+                  }
+                </ul>
+              </div>
+            }
+            @if (scan.ghostRecords.length > 0) {
+              <div>
+                <span class="font-semibold text-gray-800">Stale records to delete:</span>
+                <ul class="list-disc list-inside text-sm text-gray-600 mt-1 max-h-48 overflow-auto">
+                  @for (record of scan.ghostRecords; track record) {
+                    <li>{{ record }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          }
+        }
       </p-card>
 
       <p-card>
@@ -92,7 +157,7 @@ const AVAILABLE_LANGS = [
           <p-table
             [value]="users()"
             [tableStyle]="{ 'min-width': '30rem' }"
-            styleClass="p-datatable-striped"
+            class="p-datatable-striped"
           >
             <ng-template pTemplate="header">
               <tr>
@@ -145,6 +210,9 @@ export class AdminPanelComponent implements OnInit {
   readonly users = signal<AdminUser[]>([]);
   readonly loadingUsers = signal(true);
   readonly savingLang = signal(false);
+  readonly orphanScan = signal<OrphanFilesScan | null>(null);
+  readonly scanningOrphans = signal(false);
+  readonly cleaningOrphans = signal(false);
 
   readonly langs = AVAILABLE_LANGS;
   selectedLang = 'pl';
@@ -202,6 +270,58 @@ export class AdminPanelComponent implements OnInit {
       },
       error: () => {
         this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete user' });
+      }
+    });
+  }
+
+  scanOrphans(): void {
+    this.scanningOrphans.set(true);
+    this.adminService.scanOrphanFiles().subscribe({
+      next: (scan) => {
+        this.orphanScan.set(scan);
+        this.scanningOrphans.set(false);
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to scan for orphaned files' });
+        this.scanningOrphans.set(false);
+      }
+    });
+  }
+
+  confirmCleanupOrphans(event: Event): void {
+    const scan = this.orphanScan();
+    if (!scan) {
+      return;
+    }
+    const total = scan.orphanCount + scan.ghostCount;
+    this.confirmationService.confirm({
+      target: event.target as EventTarget,
+      message: `Are you sure you want to permanently delete ${total} orphaned item(s)? This cannot be undone.`,
+      header: 'Confirm Deletion',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Delete',
+      rejectLabel: 'Cancel',
+      acceptButtonStyleClass: 'p-button-danger',
+      rejectButtonStyleClass: 'p-button-secondary p-button-outlined',
+      accept: () => this.cleanupOrphans()
+    });
+  }
+
+  private cleanupOrphans(): void {
+    this.cleaningOrphans.set(true);
+    this.adminService.cleanupOrphanFiles().subscribe({
+      next: (result) => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Deleted ${result.deletedFiles} file(s) and ${result.deletedRecords} stale record(s)`
+        });
+        this.cleaningOrphans.set(false);
+        this.scanOrphans();
+      },
+      error: () => {
+        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Failed to delete orphaned files' });
+        this.cleaningOrphans.set(false);
       }
     });
   }

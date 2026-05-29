@@ -88,7 +88,7 @@ import { LogImportDialogComponent } from '../logs/components/log-import-dialog.c
 
                 <p-avatar
                   [label]="getUserInitials()"
-                  styleClass="bg-blue-500 text-white"
+                  class="bg-blue-500 text-white"
                   size="normal"
                   shape="circle"
                 ></p-avatar>

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { AdminUser, LangSetting } from '../models/admin.models';
+import { AdminUser, LangSetting, OrphanFilesScan, OrphanFilesCleanupResult } from '../models/admin.models';
 
 @Injectable({
   providedIn: 'root'
@@ -28,5 +28,13 @@ export class AdminService {
 
   setLang(lang: string): Observable<LangSetting> {
     return this.http.post<LangSetting>(`${this.apiUrl}/settings/lang`, { lang });
+  }
+
+  scanOrphanFiles(): Observable<OrphanFilesScan> {
+    return this.http.get<OrphanFilesScan>(`${this.apiUrl}/orphan-files`);
+  }
+
+  cleanupOrphanFiles(): Observable<OrphanFilesCleanupResult> {
+    return this.http.post<OrphanFilesCleanupResult>(`${this.apiUrl}/orphan-files/cleanup`, {});
   }
 }
