@@ -4,13 +4,11 @@ import {generateId} from '../utils/id.util';
 import {createCondition} from '../components/conditions/condition-factory';
 import {CONDITION_TEXT_CONFIG_KEYS} from '../components/conditions/condition-types';
 import {ConfirmationService} from 'primeng/api';
-import {TaskService} from '../services/task.service';
 
 @Injectable({ providedIn: 'root' })
 export class ConditionsStore {
 
   private confirmationService = inject(ConfirmationService);
-  private taskService = inject(TaskService);
 
   readonly questionElements = signal<ChatMessage[]>([]);
   readonly verificationConditions = signal<Condition[]>([]);
@@ -39,20 +37,13 @@ export class ConditionsStore {
     const element = this.questionElements()[index];
     if (element.type === 'file' && element.file) {
       this.confirmationService.confirm({
-        message: 'Are you sure you want to delete this file?',
+        message: 'Remove this file from the task? The change is applied when you save.',
         header: 'Confirmation',
         icon: 'pi pi-exclamation-triangle',
-        acceptLabel: 'Delete',
+        acceptLabel: 'Remove',
         rejectLabel: 'Cancel',
         accept: () => {
-          this.taskService.deleteFile(element.file!).subscribe({
-            next: () => {
-              remove(index);
-            },
-            error: () => {
-              remove(index);
-            }
-          });
+          remove(index);
         }
       });
     } else {

@@ -269,25 +269,6 @@ export class TaskDetailComponent {
       this.conditionsStore.hasStructuredOutput.set(!!this.structuredOutput());
     });
 
-    let previousFileIds: string[] = [];
-
-    effect(() => {
-      const elements = this.questionElements();
-      const currentFileIds = elements
-        .filter(el => el.type === 'file' && el.file)
-        .map(el => el.file!);
-
-      const filesChanged = previousFileIds.length > 0 &&
-        (currentFileIds.length !== previousFileIds.length ||
-          currentFileIds.some((id, idx) => id !== previousFileIds[idx]));
-
-      if (filesChanged) {
-        this.save();
-      }
-
-      previousFileIds = currentFileIds;
-    });
-
     this.route.params.subscribe(() => {
       const category = this.route.snapshot.queryParamMap.get('category');
       if (category) this.category.set(category);
@@ -304,8 +285,6 @@ export class TaskDetailComponent {
         this.isNewTask.set(true);
         this.conditionsStore.reset();
       }
-
-      previousFileIds = [];
     });
   }
 

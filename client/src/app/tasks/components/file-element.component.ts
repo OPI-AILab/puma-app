@@ -521,7 +521,6 @@ export class FileElementComponent implements OnInit, OnChanges {
       return;
     }
 
-    const oldFileId = this.fileId;
     const savedUrl = this.localMetadata.url;
     const savedLicense = this.localMetadata.license;
     const savedAttribution = this.localMetadata.attribution;
@@ -530,14 +529,6 @@ export class FileElementComponent implements OnInit, OnChanges {
 
     this.taskService.uploadFile(file, savedUrl, savedLicense, savedAttribution).subscribe({
       next: (response) => {
-        if (oldFileId) {
-          this.taskService.deleteFile(oldFileId).subscribe({
-            error: (error) => {
-              console.warn('Error deleting old file:', error);
-            }
-          });
-        }
-
         this.fileId = response.id;
         this.fileIdChanged.emit(response.id);
         this.loadFileMetadata();
