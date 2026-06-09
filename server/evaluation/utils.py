@@ -157,10 +157,20 @@ def wer(answer, expected) -> float:
 
 class ImageCompressor:
 
-    def compress(self, image_path: str, max_size_bytes: int) -> str:
+    def compress(self, image_path: str, max_size_bytes: int, max_dim: int | None = None) -> str:
         from PIL import Image
-        if os.path.getsize(image_path) <= max_size_bytes:
+
+        if max_dim is not None and max_dim <= 0:
+            raise ValueError("max_dim must be greater than 0.")
+
+        exceeds_max_dim = False
+        if max_dim is not None:
+            with Image.open(image_path) as img:
+                exceeds_max_dim = max(img.size) > max_dim
+
+        if os.path.getsize(image_path) <= max_size_bytes and not exceeds_max_dim:
             return image_path
+
         img = self._prepare_image(image_path)
         temp_dir = tempfile.gettempdir()
         file_name = os.path.basename(image_path)
@@ -168,7 +178,7 @@ class ImageCompressor:
         output_path = os.path.join(temp_dir,  f"{base_name}_compressed.jpg")
         logging.info(f"Compressing image {file_name}...")
 
-        scale = 1.0
+        scale = 1.0 if max_dim is None else min(1.0, max_dim / max(img.size))
         tries = 1
         while True:
             if scale < 1.0:

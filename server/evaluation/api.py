@@ -55,12 +55,12 @@ class EvalFile:
             return EvalFileType.VIDEO
         return None
 
-    def compress_image(self, max_size_bytes: int) -> "EvalFile":
+    def compress_image(self, max_size_bytes: int, max_dim: int | None) -> "EvalFile":
         if os.path.getsize(self.path) <= max_size_bytes:
             return self
         from server.evaluation.utils import ImageCompressor
         compressor = ImageCompressor()
-        output_path = compressor.compress(self.path, max_size_bytes)
+        output_path = compressor.compress(self.path, max_size_bytes, max_dim)
         mime_type, encoding = mimetypes.guess_type(output_path)
         ext = os.path.splitext(output_path)[-1].lower().strip(".")
         assert mime_type is not None, f"mime type is none for file: {output_path}"

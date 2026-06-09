@@ -25,6 +25,7 @@ class RemoteLLMConfig(BaseModel):
     wrap_json_array: bool = False
     basic_schema: bool = False
     max_file_bytes: Optional[int] = None
+    max_dim: Optional[int] = None
     reasoning_effort: Optional[str] = None
 
 
@@ -127,7 +128,7 @@ class RemoteLLMModel(EvalModel):
                 file: EvalFile = part["file"]
                 file_type = file.file_type
                 if self.config.max_file_bytes is not None and file_type == EvalFileType.IMAGE:
-                    file = file.compress_image(self.config.max_file_bytes)
+                    file = file.compress_image(self.config.max_file_bytes, self.config.max_dim)
                 assert file_type is not None, f"unknown file type: {file.path}"
                 if file_type == EvalFileType.IMAGE and self.api_type == ApiType.INLINE:
                     encoded = f"<img src=\"data:{file.mime_type};base64,{file.base64()}\" />"
