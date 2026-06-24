@@ -1,21 +1,30 @@
-# Platform for Unified Model Assessment (PUMA)
+# PUMA (Polish Unified Multimodal Assessment)
 
-PUMA is an advanced client-server system designed for the automation, management, and qualitative/quantitative evaluation of artificial intelligence models (both LLMs and specialized models). The application supports three primary data processing scenarios: Automatic Speech Recognition (ASR), Optical Character Recognition (OCR), and Structured Data Extraction.
+PUMA is an application for automating, managing, and evaluating artificial intelligence models, focusing on the assessment of linguistic and cultural competencies within the context of a selected language.
+The application supports nine languages: Polish, English, German, French, Dutch, Portuguese, Spanish, Italian, and Russian, but it can be easily extended to support additional languages.
+The assessment is based on predefined validation rules and tasks divided into several modalities: images, audio, video, and documents. Each modality contains categories focused on a specific area of knowledge or competency.
+For images, the categories include: history and culture, contemporary life, geography, and environment.
+For audio, the categories include: Automatic Speech Recognition (ASR), Speech Question Answering (SpeechQA), and Sound and Music Question Answering (Sound and Music QA).
+For documents, the categories include: Optical Character Recognition (OCR), Document Question Answering (Document QA), and Structured Extraction.
+Video content is represented by the Video QA category.
 
 ---
 
-## 1. Core System Features
+## 1. Main System Features
 
-* **Task Management (Tasks):** Creation of evaluation benchmarks (datasets) categorized into specific types such as `ASR`, `OCR`, or `Structured extraction`.
-* **Automated Rule Validation:** Dynamic server-side verification of success constraints (Verification Conditions) tailored to the specific context of the selected task category.
-* **Multilingual Capabilities:** Pre-configured system instructions supporting 9 distinct languages: Polish (pl), English (en), German (de), French (fr), Dutch (nl), Portuguese (pt), Spanish (es), Italian (it), and Russian (ru). These prompts enforce precise structural outputs (e.g., full words for digits in ASR, HTML formatted tables in OCR) without conversational fluff from the target model.
-* **Asynchronous Evaluation (Evaluation Runner):** An execution engine capable of launching bulk test suites, tracking progress live, handling manual cancellations, and supporting hot-swapping of model configuration attributes.
-* **Log Intelligence and Imports:** A utility allowing users to import historical operational logs in `.jsonl` (JSON Lines) format, complete with paginated record browsing and deep diagnostic analysis.
-* **Administration & Security:** 
-  * Session authorization secured by signed JWT tokens delivered using protected browser cookies (`HttpOnly`, `SameSite=Strict`).
-  * Administrator settings portal for managing user accounts (RBAC) and configuring the default system language.
-  * Automated background backup routine (Backup Scheduler).
-* **Workspace Export:** Ability to extract the entire project space (the database engine along with all hosted attachments) as a unified ZIP archive through a dedicated API interface.
+The system provides full management of the model evaluation process. Its key features include:
+
+* **Task Management:** Enables the creation of datasets assigned to categories, with support for editing, searching, and previewing.
+* **Multilingual Support:** The system allows the creation of separate datasets for each supported language through a growing database of structured system prompts for Polish (pl), English (en), German (de), French (fr), Dutch (nl), Portuguese (pt), Spanish (es), Italian (it), and Russian (ru). The developed prompts enforce a clean output format (e.g., numbers written in words for ASR, HTML tables for OCR) without unnecessary model commentary.
+* **Automatic Rule Validation:** Dynamic verification of success criteria (Verification Conditions) at the backend level, tailored to the specifics of the selected task category.
+* **Asynchronous Evaluation:** The engine responsible for large-scale test execution provides live status monitoring, task cancellation capabilities, and dynamic modification of model parameters during runtime.
+* **Log Analysis and Import:** The system includes a module for importing external production logs in `.jsonl` format, browsing them, and performing detailed error inspections.
+* **Environment Export:** The system allows downloading the entire project (database together with uploaded files) as a single ZIP archive through a dedicated API endpoint.
+* **Administration and Security:**
+
+  * JWT-based authentication using secure cookies.
+  * Administrative panel for user management.
+  * Automated scheduled backup system (Backup Scheduler).
 
 ---
 
@@ -23,77 +32,106 @@ PUMA is an advanced client-server system designed for the automation, management
 
 * **Backend:** FastAPI (Python), SQLModel / SQLAlchemy, Uvicorn, Python-Jose (JWT), Passlib/Bcrypt.
 * **Frontend:** Angular (TypeScript), TailwindCSS / PostCSS.
-* **Database and Storage:** SQLite via SQLAlchemy for schema data, native file system for attachment management.
+* **Database and Storage:** SQLite/SQLAlchemy for structured data storage and the local file system for attachments.
 
 ---
 
-## 3. Installation and Setup
+## 3. Installation and Startup
 
 ### Prerequisites
-* Python 3.11 or higher
-* Node.js & npm (if manual frontend compilation is required)
 
-### Backend Environment Installation
+* Python 3.11 or later
+* Node.js & npm
+
+### Backend Installation and Configuration
+
 1. Clone the project repository.
-2. Install all third-party package criteria outlined inside `requirements.txt`:
+
+2. Install the required dependencies listed in `requirements.txt`:
+
    ```bash
    pip install -r requirements.txt
    ```
-3. Prior to initial execution, verify that migration scripts (e.g., `migrations.sql`) and the instruction asset bundle (`prompts.json`) exist within the root working path.
 
-### Bootstrapping the Server Application
-The application layer is started by executing the `run_server.py` utility. Behavior can be tailored through command-line flags:
+3. Before the first startup, ensure that the migration files (e.g., `migrations.sql`) and the prompt database (`prompts.json`) are located in the main working directory.
+
+### Starting the Application Server
+
+The application is launched using the `run_server.py` startup script. Its behavior can be customized using command-line flags:
 
 ```bash
 python run_server.py --host 0.0.0.0 --port 8080 --project_dir _project --prompts_file prompts.json
 ```
 
-**Available Settings (CLI):**
-* `--host` (str): Network binding target IP for incoming connections (default: `0.0.0.0`).
-* `--port` (int): Active web port allocation (default: `8080`).
-* `--project_dir` (str): Targeted workspace path used to write out SQLite databases and save down source data uploads (default: `_project`).
-* `--jwt_secret` (str): Private structural key used to encrypt user session signatures.
-* `--prompts_file` (str): Relative location of the core multi-language prompt matrix (default: `prompts.json`).
-* `--log_sql` (bool): Toggle for auditing all database transactions directly in the process output stream (default: `False`).
+**Available Configuration Parameters (CLI):**
+
+* `--host` (str): IP address on which the server will listen (default: `0.0.0.0`).
+* `--port` (int): Server network port (default: `8080`).
+* `--project_dir` (str): Path to the project directory where the SQLite database and uploaded files will be stored (default: `_project`).
+* `--jwt_secret` (str): Private key used to sign JWT session tokens.
+* `--migration_script` (str): Path to the migration file containing the required SQL instructions (default: `migrations.json`).
+* `--prompts_file` (str): Path to the configuration file containing system prompts (default: `prompts.json`).
+* `--log_sql` (bool): Flag enabling full logging of SQL queries generated by the ORM (default: `False`).
 
 ---
 
-## 4. User Manual and Operational Flow
+## 4. User Guide
 
-### 4.1. Initialization of the System Environment
-Upon initial boot, the engine validates the persistence engine against registered users. If the state engine is completely unassigned, the platform initiates setup mode:
-1. Direct your browser to the web platform. You will be prompted to allocate a root password for the explicit super-user role (`admin`).
-2. The user credentials require a passphrase length of **at least 8 characters**.
-3. Following a successful initialization, the onboarding service block becomes permanently closed off from the router stack, preventing unauthenticated system state overwrites.
+### 4.1. First Startup and System Initialization
 
-### 4.2. Login and Session Context
-* Users authenticate by submitting their valid username and password profile via the secure login portal.
-* Successful validations return an encrypted JWT cookie tagged `access_token`. This token is distributed with strict security policies (`HttpOnly` and `SameSite=Strict`) ensuring script injection workflows cannot hijack active identities (XSS mitigation).
-* Invoking a session logout completely wipes out the token entry and flushes out the browser cookie storage.
+On first startup, the system checks the database for registered users. If the database is empty, the application enters initialization mode:
 
-### 4.3. Benchmark Task Management (Tasks)
-1. Navigate directly to the **Tasks** workspace panel and select the action to include a new task descriptor.
-2. Group the benchmark case into one of the structural categories (`ASR`, `OCR`, `Structured extraction`).
-3. Detail your specific target evaluation rules (**Verification Conditions**). The web controller enforces checks ensuring input metrics matching the strict rule sets available for that segment.
-4. Upload your asset dependencies (e.g., an audio recording for speech or an image file/PDF for text extraction). The asset layer is saved cleanly under the `files` subdirectory of your configured project root path (e.g., `_project/files/`). You can also append attribution logs, reference URLs, and license restrictions.
+1. Open the application in a web browser. You will be prompted to define a password for the default administrator account (`admin`).
+2. The password must contain **at least 8 characters**.
+3. Once the administrator account is successfully created, the initialization endpoint is permanently disabled, protecting the system from ownership reassignment.
 
-### 4.4. Model Management (Models)
-1. Under the **Models** panel view, you can easily parameterize new inference points (e.g., reference ID, temperature thresholds, response bounds, and authorization keys).
-2. Applying additions or edits triggers an immediate real-time backend updates to the localized `TaskEvaluator` instance.
-3. The schema manager blocks model removals if they are locked into saved historical entries or linked into active queues.
+### 4.2. Login
 
-### 4.5. Running Evaluation Processes
-1. Access the **Evaluations** panel and use **Create Evaluation** to set up a run instance with a dedicated name, target model, and evaluation categories.
-2. Press **Start** to spawn an isolated asynchronous test thread. The `EvaluationRunner` continuously flows questions down the model pipeline, validating structural conditions via matching criteria from the selected language config (e.g., strings loaded via `prompts.json`).
-3. You can review metrics live as they are processed or explicitly invoke a process halt by clicking **Cancel**.
-4. Run modifications are locked if a test is ongoing; editing configurations can only occur if an evaluation suite is in an *inactive* state.
-5. If an unexpected exception brings down an active calculation, the runtime engine captures the failed state by tracking the task index inside the `error_task_id` database field to support tracking down data anomalies.
+* Login is performed using a username and password.
+* After successful authentication, the server generates a JWT token and stores it in the browser as a cookie named `access_token`.
+* Logging out invalidates the session token on the server side and removes the cookie from the browser.
 
-### 4.6. Logs Audit and Ingestion (Log Intelligence)
-The suite supports direct audit processes for offline logging scenarios:
-1. Select the **Import Logs** workflow option from your control bar.
-2. Upload your file payload matching the `.jsonl` specification. Each row string is processed strictly as an independent, fully realized JSON document.
-3. Successful imports yield a trackable `import_id` parameter. Data lists can be examined smoothly through a paginated interface, searched down by unique entity IDs, or deleted instantly from storage tables.
+### 4.3. Managing Evaluation Tasks
 
-### 4.7. Full Project Environment Export
-At any production point, authenticated operators can download their entire application layout state. Invoking the package export request builds an on-the-fly zip archive mapping current databases alongside attached media assets, returning an `export.zip` container stream right back into your local downloads storage folder.
+1. The system homepage contains the task management module.
+2. Select a task category to enable the **Add Task** button, which opens the panel for creating a new task.
+3. Define the **Verification Conditions**. The system automatically validates whether the added verification rules comply with the allowed type mapping for the selected category.
+4. Upload the associated test file (e.g., an audio sample for ASR or an image/PDF file for OCR). All files are securely stored in the `files` subdirectory within the selected project directory (e.g., `_project/files/`). Optionally, you may provide the source URL, license information, and file attribution details.
+
+### 4.4. Model Configuration
+
+1. In the **Models** section, you can register the technical parameters of a model (e.g., name, temperature, maximum token count, API keys, etc.).
+2. Saving or modifying a model automatically refreshes the evaluation component state.
+3. The system prevents deletion of a model if it is associated with stored responses or active processes.
+
+### 4.5. Statistics
+
+* The Statistics section provides a summary of the activity of all users.
+* It presents the total number of tasks added by each user over successive weeks.
+
+### 4.6. Evaluations
+
+1. The **Evaluations** section contains a list of evaluations with options to recalculate, preview, or delete a selected evaluation. It includes information about status, progress, score percentage, and execution date.
+2. A new configuration is created by clicking **Create Evaluation**, specifying the name, target model configuration, and task categories.
+3. The **Start** button launches the asynchronous testing process. The process coordinator (`EvaluationRunner`) sequentially submits tasks to the models and validates responses according to the instructions for the selected language (e.g., Polish instructions loaded from `prompts.json`).
+4. Progress can be monitored in real time, and the process can be stopped using the **Cancel** button.
+5. If test configuration changes are required, model parameters may only be edited when the evaluation is inactive (status *inactive*).
+6. If a critical error occurs while processing a task, its identifier will be stored in the database column `error_task_id`, facilitating rapid problem diagnosis.
+
+### 4.7. Importing and Browsing Logs
+
+1. The **Import Logs** section enables browsing and analysis of model evaluation logs.
+2. Upload a file with the `.jsonl` extension. Each line of the file must be a valid, independent JSON object.
+3. After a successful import, the system assigns a unique import identifier (`import_id`) and generates a dedicated report with a unique URL. Logs can be viewed in a structured format using a paginated table.
+
+### 4.8. Administration Panel
+
+* The administration panel contains three sections where administrators can:
+
+1. Set the default language for newly added tasks.
+2. Search for so-called orphaned files (files not assigned to any task) and remove them.
+3. Manage user accounts, create new users, and assign default account passwords.
+
+### 4.9. Exporting the Entire Project
+
+* At any time, a logged-in user can download the complete state of the working environment. Triggering the export action generates a ZIP archive on the fly containing the current database and all associated files, then streams it directly to the browser as `export.zip`.
