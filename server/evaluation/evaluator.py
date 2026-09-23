@@ -39,6 +39,9 @@ class FileEvalConsumer(EvalConsumer):
     def log_sample(self, sample: Dict):
         if self.log_file is None:
             self.log_file = open(self.log_path, "a", encoding="utf-8")
+        if sample["answer"] is None:
+            logging.warning(f"Skipping sample '{sample['id']}' with no answer")
+            return
         self.log_file.write(json.dumps(sample, ensure_ascii=False) + "\n")
         self.log_file.flush()
 
@@ -162,6 +165,7 @@ class TaskEvaluator:
         for task in tasks:
             consumer.last_task_id = task.id
             samples.append(self._create_sample(task, model, model_id))
+        failed_tasks = False
         for sample in model.generate(samples, cancellation_token=cancellation_token):
             if cancellation_token and cancellation_token.is_cancelled:
                 break
@@ -171,8 +175,11 @@ class TaskEvaluator:
                 sample = post_processor.process_one(sample)
             task = tasks_dict.get(sample.id)
             if sample.answer is None:
-                task_scores = [(v.ValidationResult(0.0, 0.0, {"errors": ["model returned no answer"]}), condition)
-                               for condition in task.conditions]
+                task_scores = [
+                    (v.ValidationResult(0.0, 0.0, {"errors": ["model returned no answer"]}), condition)
+                    for condition in task.conditions
+                ]
+                failed_tasks = True
             else:
                 task_scores = [(self.validate(condition, sample), condition) for condition in task.conditions]
             sample.scores = [score.to_dict(condition) for score, condition in task_scores]
@@ -181,7 +188,7 @@ class TaskEvaluator:
             hard_scores[task.category].append(hard_score)
             soft_scores[task.category].append(soft_score)
             self._log_sample(sample, task, hard_score, soft_score, consumer)
-        score_dict = self._log_scores(model_id, hard_scores, soft_scores, consumer)
+        score_dict = self._log_scores(model_id, hard_scores, soft_scores, consumer, failed_tasks)
         return score_dict
 
     def _log_sample(self, sample: EvalSample, task: TaskDetails, hard_score: float, soft_score: float,
@@ -198,7 +205,7 @@ class TaskEvaluator:
         }
         consumer.log_sample(val)
 
-    def _log_scores(self, model_id: str, hard_scores: Dict, soft_scores: Dict, consumer: EvalConsumer):
+    def _log_scores(self, model_id: str, hard_scores: Dict, soft_scores: Dict, consumer: EvalConsumer, failed: bool):
         all_hard, all_soft = [], []
         score_dict = {}
         print("=" * 42)
@@ -218,6 +225,9 @@ class TaskEvaluator:
         score_dict["total_soft"] = f"{soft_score:.2f}"
         print(f"{'total'.ljust(22)} {hard_score:.2f}% {soft_score:.2f}% ({len(all_hard)})")
         print("=" * 42)
+        if failed:
+            print("Warning: log contains failed tasks")
+            print("=" * 42)
         log_dict = {"model": model_id, "timestamp": datetime.now().strftime("%d/%m/%Y,%H:%M:%S"), **score_dict}
         consumer.log_scores(log_dict)
         return score_dict
