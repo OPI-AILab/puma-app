@@ -4,6 +4,8 @@ import distance
 import tempfile
 import io
 import logging
+
+import numpy as np
 from apted import APTED, Config
 from apted.helpers import Tree
 from lxml import etree, html
@@ -153,6 +155,23 @@ def wer(answer, expected) -> float:
     target_words = " ".join(re.split(r"[\W_]+", expected, flags=re.MULTILINE)).lower()
     wer_value = wer(target_words, source_words)
     return max(0.0, 1 - wer_value)
+
+
+class AudioConverter:
+
+    def convert(self, audio_path: str):
+        import librosa
+        import soundfile as sf
+        ext = os.path.splitext(audio_path)[-1].lower().strip(".")
+        if ext == "wav":
+            return audio_path
+        temp_dir = tempfile.gettempdir()
+        y, sr = librosa.load(audio_path, sr=16000, mono=True, dtype=np.float32)
+        base_name, _ = os.path.splitext(os.path.basename(audio_path))
+        output_path = os.path.join(temp_dir, f"{base_name}_converted.wav")
+        logging.info(f"Converting file {audio_path} to WAV")
+        sf.write(output_path, y, sr, subtype="PCM_16")
+        return output_path
 
 
 class ImageCompressor:

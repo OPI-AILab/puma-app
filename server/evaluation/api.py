@@ -66,6 +66,12 @@ class EvalFile:
         assert mime_type is not None, f"mime type is none for file: {output_path}"
         return EvalFile(output_path, mime_type, ext)
 
+    def convert_audio(self):
+        from server.evaluation.utils import AudioConverter
+        converter = AudioConverter()
+        output_path = converter.convert(self.path)
+        return EvalFile(output_path, "audio/wav", "wav")
+
 
 class EvalModel(ABC):
 

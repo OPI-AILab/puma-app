@@ -295,6 +295,11 @@ class StructuredOutputValidator(Validator):
         if is_array and isinstance(answer_json, dict):
             answer_json = [answer_json]
         if not is_array:
+            if isinstance(answer_json, list):
+                if len(answer_json) == 1:
+                    answer_json = answer_json[0]
+                else:
+                    return ValidationResult(0.0, 0.0)
             res = self._compare_objects(answer_json, expected_json, "", errors)
         else:
             res = self._compare_arrays(answer_json, expected_json, errors)
